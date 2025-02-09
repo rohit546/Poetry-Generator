@@ -1,18 +1,16 @@
-import streamlit as st
-import tensorflow as tf
-from tensorflow.keras.models import load_model
 import pickle
 import numpy as np
+import streamlit as st
+from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing.sequence import pad_sequences
-import os
 
 # 🎨 Custom Styling
 st.markdown(
     """
     <style>
-        /* Background Color */
+        /* Background and Text */
         body {
-            background-color: #1E1E2E;
+            background-color: #121212;
             color: #E0E0E0;
         }
         /* Title Styling */
@@ -26,14 +24,18 @@ st.markdown(
         .stTextInput>div>div>input {
             font-size: 18px;
             padding: 10px;
+            border-radius: 8px;
+            border: 2px solid #FFA500;
         }
         /* Poetry Output */
         .poetry-box {
-            background-color: #2E2E3E;
+            background-color: #1E1E2E;
             padding: 15px;
             border-radius: 10px;
             font-size: 20px;
             text-align: center;
+            color: #FFD700;
+            font-weight: bold;
         }
         /* Custom Button */
         .stButton>button {
@@ -42,79 +44,50 @@ st.markdown(
             font-size: 18px;
             border-radius: 8px;
             padding: 10px;
+            transition: 0.3s;
+        }
+        .stButton>button:hover {
+            background-color: #FF8C00;
+            transform: scale(1.05);
         }
     </style>
     """,
     unsafe_allow_html=True
 )
 
-st.markdown('<h1 class="title">📜 Roman Urdu Poetry Generator</h1>', unsafe_allow_html=True)
+# ✅ Load Model
+model = load_model("poetry_model.keras")
 
-# ✅ Sidebar for Settings
-st.sidebar.header("⚙️ Settings")
-word_count = st.sidebar.slider("Number of words to generate:", min_value=5, max_value=50, value=20)
+# ✅ Load Tokenizer
+with open("tokenizer.pkl", "rb") as handle:
+    tokenizer = pickle.load(handle)
 
-# ✅ Check if model file exists
-if not os.path.exists("poetry_model.h5"):
-    st.error("❌ Model file not found! Make sure poetry_model.h5 is uploaded.")
-    st.stop()
-
-# ✅ Load Model with Error Handling
-try:
-    model = load_model("poetry_model.h5")
-    st.sidebar.success("✅ Model Loaded Successfully!")
-except Exception as e:
-    st.sidebar.error(f"❌ Model loading failed! Error: {str(e)}")
-    st.stop()
-
-# ✅ Load Tokenizer with Error Handling
-try:
-    with open("tokenizer.pkl", "rb") as handle:
-        tokenizer = pickle.load(handle)
-    st.sidebar.success("✅ Tokenizer Loaded Successfully!")
-except Exception as e:
-    st.sidebar.error(f"❌ Tokenizer loading failed! Error: {str(e)}")
-    st.stop()
-
-# ✅ Poetry Generation Function
+# ✅ Generate Poetry Function
 def generate_poetry(seed_text, word_count=10):
-    seed_text = seed_text.strip().split()[0]  # Ensure only one word is taken
-    generated_text = seed_text
-
     for _ in range(word_count):
-        sequence = tokenizer.texts_to_sequences([generated_text])[0]
-        if not sequence:
-            return "⚠️ Word not found in vocabulary. Try another word!"
-        
-        sequence = pad_sequences([sequence], maxlen=20, padding='pre')
+        sequence = tokenizer.texts_to_sequences([seed_text])[0]
+        sequence = pad_sequences([sequence], maxlen=20, padding='pre')  # Adjust maxlen as needed
         predicted_index = np.argmax(model.predict(sequence), axis=-1)[0]
         predicted_word = tokenizer.index_word.get(predicted_index, "")
-        if not predicted_word:
-            break
+        seed_text += " " + predicted_word
+    return seed_text
 
-        generated_text += " " + predicted_word
-    return generated_text
+# ✅ Streamlit UI
+st.markdown('<h1 class="title">📜 Roman Urdu Poetry Generator</h1>', unsafe_allow_html=True)
 
-# ✅ Streamlit UI Components
-col1, col2 = st.columns([2, 1])
+# Input Field
+seed_text = st.text_input("💬 Enter a word:", "zindagi")
 
-with col1:
-    seed_text = st.text_input("💬 Enter a Word:", "").strip()
+# Word Count Slider
+word_count = st.slider("🔢 Number of words to generate:", min_value=5, max_value=50, value=20)
 
-with col2:
-    st.markdown("### ")
-    generate_btn = st.button("✨ Generate Poetry")
+# Generate Button
+if st.button("✨ Generate Poetry"):
+    poetry = generate_poetry(seed_text, word_count)
 
-if generate_btn:
-    if not seed_text or " " in seed_text:
-        st.error("❌ Please enter only **one** word!")
-    else:
-        poetry = generate_poetry(seed_text, word_count)
+    # Poetry Output
+    st.markdown('<h3 style="text-align: center;">✨ Generated Poetry:</h3>', unsafe_allow_html=True)
+    st.markdown(f'<div class="poetry-box">{poetry}</div>', unsafe_allow_html=True)
 
-        # ✅ Animated Poetry Display
-        with st.container():
-            st.markdown('<h3 style="text-align: center;">✨ Generated Poetry:</h3>', unsafe_allow_html=True)
-            st.markdown(f'<div class="poetry-box">{poetry}</div>', unsafe_allow_html=True)
-
-        # ✅ Copy to Clipboard Feature
-        st.code(poetry, language="markdown")
+    # Copy to Clipboard Feature
+    st.code(poetry, language="markdown")
