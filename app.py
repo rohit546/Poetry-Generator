@@ -1,17 +1,38 @@
 import streamlit as st
 import numpy as np
+import os
 import pickle
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 
+# ✅ Check if model exists before loading
+model_path = "poetry_model.keras"
+tokenizer_path = "tokenizer.pkl"
+
+if not os.path.exists(model_path):
+    st.error("⚠️ Model file not found! Please upload 'poetry_model.keras' to your repository.")
+    st.stop()
+
+if not os.path.exists(tokenizer_path):
+    st.error("⚠️ Tokenizer file not found! Please upload 'tokenizer.pkl' to your repository.")
+    st.stop()
+
 # ✅ Load the trained model
-model = load_model("poetry_model.keras")  # Ensure you saved the model in this format
+try:
+    model = load_model(model_path)
+except Exception as e:
+    st.error(f"❌ Model loading failed! Error: {e}")
+    st.stop()
 
-# ✅ Load tokenizer
-with open("tokenizer.pkl", "rb") as handle:
-    tokenizer = pickle.load(handle)
+# ✅ Load tokenizer safely
+try:
+    with open(tokenizer_path, "rb") as handle:
+        tokenizer = pickle.load(handle)
+except Exception as e:
+    st.error(f"❌ Tokenizer loading failed! Error: {e}")
+    st.stop()
 
-# ✅ Define max sequence length (Make sure it matches training)
+# ✅ Define max sequence length (Ensure it matches training)
 max_seq_length = 50  # Update this based on your model
 
 # ✅ Poetry generation function
