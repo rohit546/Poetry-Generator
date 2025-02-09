@@ -23,7 +23,7 @@ def generate_poetry(seed_text, word_count=10):
 
 # ✅ Streamlit UI
 st.title("Roman Urdu Poetry Generator")
-seed_text = st.text_input("Enter a word:", "zindagi")
+seed_text = st.text_input("Enter a word:", "Ishq")
 word_count = st.slider("Number of words to generate:", min_value=5, max_value=50, value=20)
 
 if st.button("Generate"):
