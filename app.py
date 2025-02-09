@@ -76,7 +76,7 @@ def generate_poetry(seed_text, word_count=10):
 st.markdown('<h1 class="title">📜 Roman Urdu Poetry Generator</h1>', unsafe_allow_html=True)
 
 # Input Field
-seed_text = st.text_input("💬 Enter a word:", "Pyar")
+seed_text = st.text_input("💬 Enter a word:", "Rohit")
 
 # Word Count Slider
 word_count = st.slider("🔢 Number of words to generate:", min_value=5, max_value=50, value=20)
