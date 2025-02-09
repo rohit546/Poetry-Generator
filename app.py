@@ -11,22 +11,41 @@ model = load_model("poetry_model.keras")
 with open("tokenizer.pkl", "rb") as handle:
     tokenizer = pickle.load(handle)
 
-# ✅ Generate Poetry Function
+# ✅ Poetry Generation Function
 def generate_poetry(seed_text, word_count=10):
+    seed_text = seed_text.strip().split()[0]  # Ensure only one word is taken
+    generated_text = seed_text
+
     for _ in range(word_count):
-        sequence = tokenizer.texts_to_sequences([seed_text])[0]
-        sequence = pad_sequences([sequence], maxlen=20, padding='pre')  # Adjust maxlen as needed
+        sequence = tokenizer.texts_to_sequences([generated_text])[0]
+
+        if not sequence:
+            return "⚠️ Word not found in vocabulary. Try another word!"
+
+        sequence = pad_sequences([sequence], maxlen=20, padding='pre')  
         predicted_index = np.argmax(model.predict(sequence), axis=-1)[0]
         predicted_word = tokenizer.index_word.get(predicted_index, "")
-        seed_text += " " + predicted_word
-    return seed_text
+
+        if not predicted_word:
+            break  # Stop if no valid word is predicted
+
+        generated_text += " " + predicted_word
+
+    return generated_text
 
 # ✅ Streamlit UI
-st.title("Roman Urdu Poetry Generator")
-seed_text = st.text_input("Enter a word:", "zindagi")
+st.title("📜 Roman Urdu Poetry Generator")
+st.write("Enter a **single** word to generate poetry!")
+
+# ✅ User Input
+seed_text = st.text_input("Enter a word:", "").strip()
 word_count = st.slider("Number of words to generate:", min_value=5, max_value=50, value=20)
 
+# ✅ Button to generate poetry
 if st.button("Generate"):
-    poetry = generate_poetry(seed_text, word_count)
-    st.write("**Generated Poetry:**")
-    st.write(poetry)
+    if not seed_text or " " in seed_text:
+        st.error("❌ Please enter only **one** word!")
+    else:
+        poetry = generate_poetry(seed_text, word_count)
+        st.subheader("✨ Generated Poetry:")
+        st.write(poetry)
