@@ -73,7 +73,7 @@ def generate_poetry(seed_text, word_count=10):
     return seed_text
 
 # ✅ Streamlit UI
-st.markdown('<h1 class="title">📜 Roman Urdu Poetry Generator</h1>', unsafe_allow_html=True)
+st.markdown('<h1 class="title">📜 Kalaam-e-AI </h1>', unsafe_allow_html=True)
 
 # Input Field
 seed_text = st.text_input("💬 Enter a word:", "Ishq")
